@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>使用记录</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- 左侧菜单 -->
+  <div class="sidebar">
+    <div class="logo">
+      <i class="fas fa-flask"></i>
+      <span>实验室管理</span>
+    </div>
+
+    <ul class="menu">
+      <li class="menu-item">
+        <a href="ledger.html"><i class="fas fa-book"></i> 实验室台账</a>
+      </li>
+      <li class="menu-item">
+        <a href="assets.html"><i class="fas fa-boxes"></i> 资产明细</a>
+      </li>
+      <li class="menu-item active">
+        <a href="usage.html"><i class="fas fa-chalkboard-teacher"></i> 使用记录</a>
+      </li>
+      <li class="menu-item">
+        <a href="consume.html"><i class="fas fa-vials"></i> 耗材管理</a>
+      </li>
+      <li class="menu-item">
+        <a href="cash.html"><i class="fas fa-yen-sign"></i> 经费流水</a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="main-content">
+
+    <div class="page-header">
+      <h2>使用记录</h2>
+    </div>
+
+    <div class="card">
+
+      <!-- 操作按钮（与 ledger.html 完全一致） -->
+      <button class="primary" onclick="openForm()">
+        <i class="fas fa-plus"></i> 新增记录
+      </button>
+
+      <button class="success" onclick="exportData()">
+        <i class="fas fa-file-excel"></i> 导出数据
+      </button>
+
+      <button class="success" onclick="exportTemplate()">
+        <i class="fas fa-file"></i> 导出模板
+      </button>
+
+      <button class="success" onclick="document.getElementById('file').click()">
+        <i class="fas fa-file-import"></i> 导入 Excel
+      </button>
+
+      <input type="file" id="file" accept=".xlsx,.xls"
+             style="display:none"
+             onchange="importExcelFile(this.files[0])">
+
+      <!-- 表格 -->
+      <table style="margin-top:15px">
+        <thead>
+          <tr>
+            <th>使用日期</th>
+            <th>班级</th>
+            <th>教师</th>
+            <th>实验内容</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="body"></tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3 style="margin-bottom:15px">使用记录</h3>
+
+    <div class="form-panel">
+      <input id="f0" placeholder="使用日期">
+      <input id="f1" placeholder="班级">
+      <input id="f2" placeholder="教师">
+      <input id="f3" placeholder="实验内容">
+    </div>
+
+    <div style="text-align:right;margin-top:10px">
+      <button class="danger" onclick="closeForm()">取消</button>
+      <button class="success" onclick="save()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/***********************
+ * 文件型数据库 API
+ ***********************/
+async function apiGet(){
+  const res = await fetch('/api/usage')
+  return await res.json()
+}
+
+async function apiSet(data){
+  await fetch('/api/usage',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  })
+}
+
+/***********************
+ * 页面逻辑（母版一致）
+ ***********************/
+let editIndex = null
+
+async function render(){
+  const data = await apiGet()
+  document.getElementById('body').innerHTML = data.map((r,i)=>`
+    <tr>
+      <td>${r[0] || ''}</td>
+      <td>${r[1] || ''}</td>
+      <td>${r[2] || ''}</td>
+      <td>${r[3] || ''}</td>
+      <td>
+        <i class="fas fa-edit action-btn" onclick="edit(${i})"></i>
+        <i class="fas fa-trash action-btn delete" onclick="del(${i})"></i>
+      </td>
+    </tr>
+  `).join('')
+}
+
+function openForm(){
+  editIndex = null
+  document.querySelectorAll('.form-panel input').forEach(i=>i.value='')
+  modal.style.display='flex'
+}
+
+function closeForm(){
+  modal.style.display='none'
+}
+
+async function save(){
+  const values = [...document.querySelectorAll('.form-panel input')].map(i=>i.value)
+  const data = await apiGet()
+  editIndex === null ? data.push(values) : data[editIndex] = values
+  await apiSet(data)
+  closeForm()
+  render()
+}
+
+async function edit(i){
+  editIndex = i
+  const data = await apiGet()
+  data[i].forEach((v,idx)=>f0.parentNode.children[idx].value=v)
+  modal.style.display='flex'
+}
+
+async function del(i){
+  if(confirm('确定删除该记录？')){
+    const data = await apiGet()
+    data.splice(i,1)
+    await apiSet(data)
+    render()
+  }
+}
+
+/***********************
+ * Excel 导出（数据）
+ ***********************/
+async function exportData(){
+  const data = await apiGet()
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['使用日期','班级','教师','实验内容'],
+    ...data
+  ])
+  XLSX.utils.book_append_sheet(wb, ws, '使用记录')
+  XLSX.writeFile(wb, '使用记录.xlsx')
+}
+
+/***********************
+ * Excel 导出（模板）
+ ***********************/
+function exportTemplate(){
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['使用日期','班级','教师','实验内容']
+  ])
+  XLSX.utils.book_append_sheet(wb, ws, '模板')
+  XLSX.writeFile(wb, '使用记录_导入模板.xlsx')
+}
+
+/***********************
+ * Excel 导入
+ ***********************/
+function importExcelFile(file){
+  const reader = new FileReader()
+  reader.onload = async e=>{
+    const wb = XLSX.read(e.target.result,{type:'binary'})
+    const ws = wb.Sheets[wb.SheetNames[0]]
+    const rows = XLSX.utils.sheet_to_json(ws,{header:1})
+    rows.shift()
+    await apiSet(rows.filter(r=>r.length>=4))
+    render()
+  }
+  reader.readAsBinaryString(file)
+}
+
+/* 初始化 */
+render()
+</script>
+
+</body>
+</html>

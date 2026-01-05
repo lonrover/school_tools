@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>实验室管理系统</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- 左侧菜单（原样保留） -->
+  <div class="sidebar">
+    <div class="logo">
+      <i class="fas fa-flask"></i>
+      <span>实验室管理</span>
+    </div>
+
+    <ul class="menu">
+      <li id="menu-ledger" class="menu-item active">
+        <a href="ledger.html"><i class="fas fa-book"></i> 实验室台账</a>
+      </li>
+      <li id="menu-assets" class="menu-item">
+        <a href="assets.html"><i class="fas fa-boxes"></i> 资产明细</a>
+      </li>
+      <li id="menu-usage" class="menu-item">
+        <a href="usage.html"><i class="fas fa-chalkboard-teacher"></i> 使用记录</a>
+      </li>
+      <li id="menu-consume" class="menu-item">
+        <a href="consume.html"><i class="fas fa-vials"></i> 耗材管理</a>
+      </li>
+      <li id="menu-cash" class="menu-item">
+        <a href="cash.html"><i class="fas fa-yen-sign"></i> 经费流水</a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 主区域（首页说明） -->
+  <div class="main-content">
+    <div class="page-header">
+      <h2>欢迎使用小学科学实验室管理系统</h2>
+    </div>
+
+    <div class="dashboard">
+      <div class="card">
+        <h3>使用说明</h3>
+        <p>请通过左侧菜单进入各功能模块进行管理。</p>
+        <p>所有数据保存在本地浏览器中，无需服务器。</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+setActiveMenu('menu-ledger')
+</script>
+
+</body>
+</html>
